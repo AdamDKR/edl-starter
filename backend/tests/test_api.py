@@ -125,31 +125,53 @@ def test_get_task_by_id(client):
 
 def test_delete_task(client):
     """Supprimer une tâche existante renvoie 204, puis la tâche n'existe plus (GET → 404)."""
-    pytest.fail("Test à écrire (Exercice 1)")
+    create_response = client.post("/tasks", json={"title": "Trouve-moi"})
+    id= create_response.json()["id"]
 
+    response = client.delete(f"/tasks/{id}")
+    assert response.status_code == 204
+    response = client.get(f"/tasks/{id}")
+    assert response.status_code == 404
 
 def test_delete_nonexistent_task(client):
     """Supprimer une tâche qui n'existe pas renvoie 404."""
-    pytest.fail("Test à écrire (Exercice 1)")
+    
+        
+    
+    response = client.delete(f"/tasks/{1000}")
+    assert response.status_code == 404
 
 
 # --- Exercice 2 : modifier une tâche ---
 
 def test_update_task_title(client):
     """Modifier le titre d'une tâche renvoie 200 et la tâche avec le nouveau titre."""
-    pytest.fail("Test à écrire (Exercice 2)")
+    create_response = client.post("/tasks", json={"title": "Trouve-moi"})
+    id= create_response.json()["id"]
+    response=client.get(f"/tasks/{id}")
+    assert response.status_code == 200
+    response = client.put(f"/tasks/{id}", json={"title": "Nouveau titre"})
+    assert response.status_code == 200
+
+
 
 
 def test_update_only_changes_sent_fields(client):
     """Créez une tâche avec un titre, une description et une priorité,
     puis envoyez seulement {"status": "done"} : le statut change,
     mais le titre, la description et la priorité restent identiques."""
-    pytest.fail("Test à écrire (Exercice 2)")
+    create_response = client.post("/tasks", json={"title": "Trouve-moi","description": "içi et là","priority": "high"})
+    id= create_response.json()["id"]
+    response=client.get(f"/tasks/{id}")
+    assert response.status_code == 200
+    response = client.put(f"/tasks/{id}", json={"status": "done"})
+    assert response.status_code == 200
 
 
 def test_update_nonexistent_task(client):
     """Modifier une tâche qui n'existe pas renvoie 404."""
-    pytest.fail("Test à écrire (Exercice 2)")
+    response = client.put(f"/tasks/{1000}", json={"title": "Nouveau titre"})
+    assert response.status_code == 404
 
 
 # =============================================================================
@@ -161,24 +183,37 @@ def test_update_nonexistent_task(client):
 
 def test_create_task_with_empty_title(client):
     """Créer une tâche avec un titre vide ("") est refusé : 422."""
-    pytest.fail("Test à écrire (Exercice 3)")
+    create_response = client.post("/tasks", json={"title": ""})
+    assert create_response.status_code == 422
 
 
 def test_get_nonexistent_task(client):
     """Demander une tâche qui n'existe pas renvoie 404."""
-    pytest.fail("Test à écrire (Exercice 3)")
+    response = client.get(f"/tasks/{1000}")
+    assert response.status_code == 404
 
 
 def test_update_task_with_invalid_priority(client):
     """Mettre à jour une tâche avec priority="urgent" est refusé : 422.
     (Les priorités valides sont "low", "medium" et "high".)"""
-    pytest.fail("Test à écrire (Exercice 3)")
+    create_response = client.post("/tasks", json={"title": "test de priorité", "priority": "low"})
+    id= create_response.json()["id"]
+    response = client.put(f"/tasks/{id}", json={"priority": "urgent"})
+    assert response.status_code == 422
+
 
 
 def test_filter_tasks_by_status(client):
     """Créez une tâche "todo" et une tâche "done" : GET /tasks?status=done
     ne renvoie qu'une seule tâche, celle qui est terminée."""
-    pytest.fail("Test à écrire (Exercice 3)")
+    create_response1 = client.post("/tasks", json={"title": "test de priorité", "status": "todo"})
+    id1= create_response1.json()["id"]
+    create_response2 = client.post("/tasks", json={"title": "test de priorité", "status": "done"})
+    id2= create_response2.json()["id"]
+    response=client.get(f"/tasks?status=done")
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+
 
 
 # =============================================================================

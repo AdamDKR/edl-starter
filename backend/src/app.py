@@ -184,7 +184,7 @@ async def create_task(task_data: TaskCreate) -> Task:
     # Create new task with auto-generated ID
     task_id = get_next_id()
     now = datetime.now(timezone.utc)
-
+    
     task = Task(
         id=task_id,
         title=task_data.title,
@@ -221,7 +221,23 @@ async def update_task(task_id: int, updates: TaskUpdate) -> Task:
       uniquement les champs envoyés, par exemple {"status": "done"}.
     """
     # TODO: Votre code ici
-    raise HTTPException(status_code=501, detail="Update not implemented yet - complete this function!")
+    if task_id not in tasks_db:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    else:
+        champs=updates.model_dump(exclude_unset=True)
+        task=tasks_db.get(task_id,None)
+        if task is None:
+            raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+        else:
+            task.updated_at=datetime.now(timezone.utc)
+            for key, value in champs.items():
+                setattr(task, key, value)
+            return task
+        
+
+    
+    
+
 
 
 @app.delete("/tasks/{task_id}", status_code=204)
@@ -238,7 +254,11 @@ async def delete_task(task_id: int):
     Indice : get_task(), plus haut dans ce fichier, vérifie déjà si une tâche existe.
     """
     # TODO: Votre code ici
-    raise HTTPException(status_code=501, detail="Delete not implemented yet - complete this function!")
+    if task_id not in tasks_db:
+            raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    else:
+        del tasks_db[task_id]
+        raise HTTPException(status_code=204, detail=f"Task {task_id} deleted")
 
 
 if __name__ == "__main__":  # pragma: no cover (lancement manuel, pas testé)
